@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Disruption Triage · AIP</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#F4F3F0;color:#1a1a1a;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+
+/* TOP BAR */
+.bar{height:44px;background:#fff;border-bottom:1px solid #e8e8e6;display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.bar-logo{font-size:11px;font-weight:700;color:#1a1a1a;letter-spacing:.5px;opacity:.5}
+.bar-sep{color:#ccc;font-size:16px}
+.bar-title{font-size:12px;color:#555;font-weight:400}
+.bar-pill{margin-left:auto;font-size:10px;background:#EEF2FF;color:#4338CA;padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.3px}
+
+/* LAYOUT */
+.app{display:flex;flex:1;overflow:hidden}
+
+/* LEFT */
+.left{width:256px;background:#fff;border-right:1px solid #e8e8e6;display:flex;flex-direction:column;flex-shrink:0}
+.left-head{padding:12px 14px 10px;border-bottom:1px solid #f0f0ee}
+.left-eyebrow{font-size:9px;font-weight:700;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.left-subtitle{font-size:11px;color:#888}
+.alerts{overflow-y:auto;flex:1}
+.alert-row{padding:11px 14px;border-bottom:1px solid #f5f5f3;cursor:pointer;transition:background .1s;position:relative}
+.alert-row:hover{background:#fafaf8}
+.alert-row.sel{background:#F0F0FF;border-left:3px solid #5B4FE8}
+.alert-row.sel .a-title{color:#3730A3}
+.a-title{font-size:11.5px;font-weight:500;line-height:1.4;margin-bottom:5px;color:#222}
+.a-meta{display:flex;align-items:center;gap:5px}
+.a-region{font-size:10px;color:#888;background:#f5f5f3;padding:2px 6px;border-radius:3px;border:1px solid #ebebea}
+.a-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.d-crit{background:#D92D20}.d-med{background:#F79009}.d-low{background:#17B26A}
+
+/* RIGHT */
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#bbb}
+.empty-icon{font-size:28px;opacity:.4}
+.empty-msg{font-size:12px}
+
+/* ALERT BANNER */
+.banner{padding:10px 16px;background:#fff;border-bottom:1px solid #e8e8e6;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.b-headline{flex:1;font-size:12.5px;font-weight:500;color:#1a1a1a}
+.b-badge{font-size:10px;font-weight:600;background:#FEF3F2;color:#B42318;padding:3px 10px;border-radius:20px;white-space:nowrap;border:1px solid #FECDCA}
+.run-btn{background:#5B4FE8;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:.2px;transition:background .15s}
+.run-btn:hover{background:#4338CA}
+.run-btn:disabled{background:#A5B4FC;cursor:not-allowed}
+
+/* CONTENT AREA */
+.content{flex:1;overflow-y:auto;padding:16px}
+
+/* ALERT BODY */
+.body-card{background:#fff;border:1px solid #e8e8e6;border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.body-label{font-size:9px;font-weight:700;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.body-text{font-size:12px;color:#555;line-height:1.65}
+
+/* STATS */
+.stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.stat{background:#fff;border:1px solid #e8e8e6;border-radius:8px;padding:10px 14px;min-width:110px}
+.stat-label{font-size:9px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.stat-num{font-size:24px;font-weight:500;color:#1a1a1a;line-height:1}
+.stat-num.r{color:#B42318}
+
+/* TABLE */
+.tbl-wrap{background:#fff;border:1px solid #e8e8e6;border-radius:8px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:7px 12px;font-size:9.5px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #f0f0ee;background:#fafaf8}
+.tbl td{padding:10px 12px;border-bottom:1px solid #f7f7f5;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafaf8}
+.shp{font-weight:700;color:#185FA5;font-size:11px;letter-spacing:.3px}
+.loc{font-size:11px;color:#888}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.act{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;border:1px solid transparent}
+
+/* SEVERITY */
+.s9{background:#FEF3F2;color:#B42318}.s8{background:#FFF4ED;color:#C4320A}
+.s7{background:#FFFAEB;color:#B54708}.s6{background:#FFFAEB;color:#B54708}
+.s5{background:#F0FDF4;color:#166534}.slow{background:#ECFDF5;color:#065F46}
+
+/* ACTION */
+.areroute{background:#FEF3F2;color:#B42318;border-color:#FECDCA}
+.acoordinate{background:#FFF4ED;color:#C4320A;border-color:#F9DBAF}
+.ahold{background:#FFFAEB;color:#B54708;border-color:#FEDF89}
+.amonitor{background:#F0FDF4;color:#166534;border-color:#A7F3D0}
+
+/* LOADING */
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:180px;gap:12px}
+.spin{width:22px;height:22px;border:2px solid #e8e8e6;border-top-color:#5B4FE8;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-msg{font-size:11px;color:#aaa}
+.no-affected{padding:40px;text-align:center;color:#aaa;font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <span class="bar-logo">FOUNDRY</span>
+  <span class="bar-sep">/</span>
+  <span class="bar-title">Supply Chain Disruption Triage</span>
+  <span class="bar-pill">AIP · Live</span>
+</div>
+
+<div class="app">
+  <div class="left">
+    <div class="left-head">
+      <div class="left-eyebrow">Disruption Alerts</div>
+      <div class="left-subtitle">8 active · click to triage</div>
+    </div>
+    <div class="alerts" id="alerts"></div>
+  </div>
+
+  <div class="right" id="right">
+    <div class="empty" id="emptyState">
+      <div class="empty-icon">⚡</div>
+      <div class="empty-msg">Select an alert to run AI triage</div>
+    </div>
+    <div id="triagePanel" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+      <div class="banner">
+        <div class="b-headline" id="bHead"></div>
+        <div class="b-badge" id="bBadge"></div>
+        <button class="run-btn" id="runBtn" onclick="runTriage()">Run Triage</button>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALERTS=[
+  {id:'ALERT-001',headline:'Port of Rotterdam 48-hour labor strike begins Monday',region:'Europe-North',body:'Dockworkers at the Port of Rotterdam have announced a 48-hour strike starting Monday over stalled wage negotiations. All container loading and unloading operations are expected to halt. The port authority warns of significant backlog and advises carriers to consider alternate North European ports such as Antwerp or Hamburg.',sev:'crit'},
+  {id:'ALERT-002',headline:'Typhoon Maelstrom approaching South China Sea shipping lanes',region:'Asia-East',body:'A category 4 typhoon is forecast to cross major shipping lanes off Shanghai and Shenzhen within 72 hours. Authorities have begun closing ports preemptively. Vessels are advised to seek shelter or delay departure. Severe delays expected for any cargo transiting the region this week.',sev:'crit'},
+  {id:'ALERT-003',headline:'Suez Canal partially blocked after vessel grounding',region:'MiddleEast',body:'A bulk carrier has run aground in the Suez Canal, partially obstructing the southbound lane. Tug operations are underway but transit times are expected to increase substantially. Vessels routing between Asia and Europe may face multi-day delays or reroute around the Cape of Good Hope.',sev:'crit'},
+  {id:'ALERT-004',headline:'Minor customs system outage at Singapore resolved',region:'Asia-SE',body:'A brief outage in the Singapore customs clearance system earlier today has now been fully resolved. Officials report normal processing has resumed with only minimal residual delays. No significant impact to scheduled departures is anticipated.',sev:'low'},
+  {id:'ALERT-005',headline:'New tariff inspection regime slows Los Angeles port throughput',region:'NAmerica-West',body:'U.S. customs has implemented enhanced inspection requirements for electronics and battery cargo entering through Los Angeles and Long Beach. Importers report clearance times have roughly doubled. Cargo containing lithium batteries and consumer electronics is most affected.',sev:'med'},
+  {id:'ALERT-006',headline:'Rail disruption inland from Hamburg after flooding',region:'Europe-North',body:'Heavy flooding has disrupted rail freight links serving the Port of Hamburg, affecting onward distribution of containers. Port operations continue but inland movement of goods is delayed. Time-sensitive cargo may be affected.',sev:'med'},
+  {id:'ALERT-007',headline:'Labor shortage causes moderate delays at Santos port',region:'SAmerica-East',body:'The Port of Santos is experiencing moderate operational delays due to a seasonal labor shortage. Loading and unloading are continuing at reduced capacity. Carriers should anticipate delays of one to two days.',sev:'med'},
+  {id:'ALERT-008',headline:'Routine maintenance window scheduled at Dubai terminal',region:'MiddleEast',body:'Jebel Ali terminal in Dubai has announced a scheduled maintenance window this weekend affecting two of twelve berths. Operations will continue on remaining berths. Minimal disruption to overall throughput is expected.',sev:'low'}
+];
+
+const SHIPMENTS=[{"shipment_id":"SHP-0001","current_region":"Europe-North","current_location":"Hamburg, Germany","cargo":"Semiconductors","cargo_value_usd":"50000","eta_days":"20","status":"Departed"},{"shipment_id":"SHP-0002","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Consumer Electronics","cargo_value_usd":"120000","eta_days":"6","status":"In Transit"},{"shipment_id":"SHP-0003","current_region":"SAmerica-East","current_location":"Santos, Brazil","cargo":"Solar Panels","cargo_value_usd":"50000","eta_days":"16","status":"In Transit"},{"shipment_id":"SHP-0004","current_region":"NAmerica-East","current_location":"Savannah, USA","cargo":"Agricultural Equipment","cargo_value_usd":"120000","eta_days":"25","status":"Loading"},{"shipment_id":"SHP-0005","current_region":"Asia-SE","current_location":"Singapore","cargo":"Pharmaceuticals","cargo_value_usd":"750000","eta_days":"12","status":"Departed"},{"shipment_id":"SHP-0006","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Consumer Electronics","cargo_value_usd":"480000","eta_days":"19","status":"Departed"},{"shipment_id":"SHP-0007","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Industrial Machinery","cargo_value_usd":"120000","eta_days":"4","status":"Loading"},{"shipment_id":"SHP-0008","current_region":"Europe-North","current_location":"Hamburg, Germany","cargo":"Auto Parts","cargo_value_usd":"750000","eta_days":"22","status":"At Port"},{"shipment_id":"SHP-0009","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Consumer Electronics","cargo_value_usd":"120000","eta_days":"18","status":"At Port"},{"shipment_id":"SHP-0010","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Auto Parts","cargo_value_usd":"250000","eta_days":"29","status":"Departed"},{"shipment_id":"SHP-0011","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Steel Coils","cargo_value_usd":"750000","eta_days":"33","status":"In Transit"},{"shipment_id":"SHP-0012","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Solar Panels","cargo_value_usd":"120000","eta_days":"12","status":"Customs Hold"},{"shipment_id":"SHP-0013","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Semiconductors","cargo_value_usd":"750000","eta_days":"31","status":"Departed"},{"shipment_id":"SHP-0014","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Auto Parts","cargo_value_usd":"1200000","eta_days":"9","status":"Departed"},{"shipment_id":"SHP-0015","current_region":"SAmerica-East","current_location":"Santos, Brazil","cargo":"Lithium Batteries","cargo_value_usd":"50000","eta_days":"20","status":"Customs Hold"},{"shipment_id":"SHP-0016","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Steel Coils","cargo_value_usd":"750000","eta_days":"13","status":"Departed"},{"shipment_id":"SHP-0017","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Solar Panels","cargo_value_usd":"2100000","eta_days":"34","status":"Departed"},{"shipment_id":"SHP-0018","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Lithium Batteries","cargo_value_usd":"750000","eta_days":"35","status":"In Transit"},{"shipment_id":"SHP-0019","current_region":"NAmerica-East","current_location":"Savannah, USA","cargo":"Auto Parts","cargo_value_usd":"50000","eta_days":"25","status":"Loading"},{"shipment_id":"SHP-0020","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Consumer Electronics","cargo_value_usd":"50000","eta_days":"7","status":"Customs Hold"},{"shipment_id":"SHP-0021","current_region":"SAmerica-East","current_location":"Santos, Brazil","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"10","status":"At Port"},{"shipment_id":"SHP-0022","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Lithium Batteries","cargo_value_usd":"250000","eta_days":"35","status":"Departed"},{"shipment_id":"SHP-0023","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"14","status":"Loading"},{"shipment_id":"SHP-0024","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Agricultural Equipment","cargo_value_usd":"480000","eta_days":"35","status":"Customs Hold"},{"shipment_id":"SHP-0025","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Pharmaceuticals","cargo_value_usd":"250000","eta_days":"3","status":"Departed"},{"shipment_id":"SHP-0026","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Steel Coils","cargo_value_usd":"50000","eta_days":"6","status":"In Transit"},{"shipment_id":"SHP-0027","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Industrial Machinery","cargo_value_usd":"2100000","eta_days":"23","status":"In Transit"},{"shipment_id":"SHP-0028","current_region":"Asia-SE","current_location":"Singapore","cargo":"Textiles","cargo_value_usd":"120000","eta_days":"10","status":"Departed"},{"shipment_id":"SHP-0029","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Textiles","cargo_value_usd":"2100000","eta_days":"28","status":"At Port"},{"shipment_id":"SHP-0030","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Pharmaceuticals","cargo_value_usd":"250000","eta_days":"29","status":"Customs Hold"},{"shipment_id":"SHP-0031","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Industrial Machinery","cargo_value_usd":"1200000","eta_days":"8","status":"In Transit"},{"shipment_id":"SHP-0032","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Solar Panels","cargo_value_usd":"120000","eta_days":"14","status":"At Port"},{"shipment_id":"SHP-0033","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Pharmaceuticals","cargo_value_usd":"120000","eta_days":"19","status":"Customs Hold"},{"shipment_id":"SHP-0034","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Pharmaceuticals","cargo_value_usd":"480000","eta_days":"8","status":"In Transit"},{"shipment_id":"SHP-0035","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Auto Parts","cargo_value_usd":"50000","eta_days":"17","status":"At Port"},{"shipment_id":"SHP-0036","current_region":"NAmerica-East","current_location":"Savannah, USA","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"27","status":"In Transit"},{"shipment_id":"SHP-0037","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Semiconductors","cargo_value_usd":"250000","eta_days":"31","status":"Loading"},{"shipment_id":"SHP-0038","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Auto Parts","cargo_value_usd":"1200000","eta_days":"33","status":"At Port"},{"shipment_id":"SHP-0039","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Industrial Machinery","cargo_value_usd":"750000","eta_days":"5","status":"Loading"},{"shipment_id":"SHP-0040","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Textiles","cargo_value_usd":"750000","eta_days":"35","status":"At Port"},{"shipment_id":"SHP-0041","current_region":"Europe-North","current_location":"Hamburg, Germany","cargo":"Lithium Batteries","cargo_value_usd":"50000","eta_days":"6","status":"At Port"},{"shipment_id":"SHP-0042","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Consumer Electronics","cargo_value_usd":"120000","eta_days":"4","status":"Departed"},{"shipment_id":"SHP-0043","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Consumer Electronics","cargo_value_usd":"750000","eta_days":"35","status":"Loading"},{"shipment_id":"SHP-0044","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Lithium Batteries","cargo_value_usd":"120000","eta_days":"18","status":"Customs Hold"},{"shipment_id":"SHP-0045","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Solar Panels","cargo_value_usd":"480000","eta_days":"22","status":"In Transit"},{"shipment_id":"SHP-0046","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Consumer Electronics","cargo_value_usd":"50000","eta_days":"6","status":"Departed"},{"shipment_id":"SHP-0047","current_region":"Asia-SE","current_location":"Singapore","cargo":"Steel Coils","cargo_value_usd":"250000","eta_days":"6","status":"At Port"},{"shipment_id":"SHP-0048","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Consumer Electronics","cargo_value_usd":"2100000","eta_days":"21","status":"Departed"},{"shipment_id":"SHP-0049","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Auto Parts","cargo_value_usd":"1200000","eta_days":"21","status":"In Transit"},{"shipment_id":"SHP-0050","current_region":"Asia-SE","current_location":"Singapore","cargo":"Solar Panels","cargo_value_usd":"50000","eta_days":"11","status":"Loading"},{"shipment_id":"SHP-0051","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Lithium Batteries","cargo_value_usd":"120000","eta_days":"18","status":"Departed"},{"shipment_id":"SHP-0052","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Industrial Machinery","cargo_value_usd":"50000","eta_days":"29","status":"Loading"},{"shipment_id":"SHP-0053","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Steel Coils","cargo_value_usd":"1200000","eta_days":"18","status":"At Port"},{"shipment_id":"SHP-0054","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Pharmaceuticals","cargo_value_usd":"750000","eta_days":"2","status":"In Transit"},{"shipment_id":"SHP-0055","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Steel Coils","cargo_value_usd":"750000","eta_days":"4","status":"Loading"},{"shipment_id":"SHP-0056","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Pharmaceuticals","cargo_value_usd":"120000","eta_days":"4","status":"Loading"},{"shipment_id":"SHP-0057","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Industrial Machinery","cargo_value_usd":"250000","eta_days":"15","status":"At Port"},{"shipment_id":"SHP-0058","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"28","status":"Departed"},{"shipment_id":"SHP-0059","current_region":"Europe-North","current_location":"Felixstowe, UK","cargo":"Steel Coils","cargo_value_usd":"2100000","eta_days":"12","status":"At Port"},{"shipment_id":"SHP-0060","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Lithium Batteries","cargo_value_usd":"1200000","eta_days":"23","status":"Customs Hold"},{"shipment_id":"SHP-0061","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Steel Coils","cargo_value_usd":"250000","eta_days":"12","status":"In Transit"},{"shipment_id":"SHP-0062","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Textiles","cargo_value_usd":"120000","eta_days":"14","status":"Customs Hold"},{"shipment_id":"SHP-0063","current_region":"MiddleEast","current_location":"Suez, Egypt","cargo":"Steel Coils","cargo_value_usd":"120000","eta_days":"3","status":"At Port"},{"shipment_id":"SHP-0064","current_region":"Asia-SE","current_location":"Singapore","cargo":"Pharmaceuticals","cargo_value_usd":"2100000","eta_days":"19","status":"Loading"},{"shipment_id":"SHP-0065","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Auto Parts","cargo_value_usd":"250000","eta_days":"3","status":"In Transit"},{"shipment_id":"SHP-0066","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Consumer Electronics","cargo_value_usd":"250000","eta_days":"4","status":"In Transit"},{"shipment_id":"SHP-0067","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Lithium Batteries","cargo_value_usd":"480000","eta_days":"34","status":"In Transit"},{"shipment_id":"SHP-0068","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Steel Coils","cargo_value_usd":"50000","eta_days":"29","status":"In Transit"},{"shipment_id":"SHP-0069","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Auto Parts","cargo_value_usd":"250000","eta_days":"29","status":"In Transit"},{"shipment_id":"SHP-0070","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Lithium Batteries","cargo_value_usd":"1200000","eta_days":"9","status":"Loading"},{"shipment_id":"SHP-0071","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Pharmaceuticals","cargo_value_usd":"250000","eta_days":"27","status":"Loading"},{"shipment_id":"SHP-0072","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Pharmaceuticals","cargo_value_usd":"1200000","eta_days":"26","status":"At Port"},{"shipment_id":"SHP-0073","current_region":"Asia-SE","current_location":"Singapore","cargo":"Semiconductors","cargo_value_usd":"750000","eta_days":"2","status":"Loading"},{"shipment_id":"SHP-0074","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Consumer Electronics","cargo_value_usd":"750000","eta_days":"22","status":"Customs Hold"},{"shipment_id":"SHP-0075","current_region":"MiddleEast","current_location":"Dubai, UAE","cargo":"Auto Parts","cargo_value_usd":"750000","eta_days":"32","status":"At Port"},{"shipment_id":"SHP-0076","current_region":"Asia-SE","current_location":"Singapore","cargo":"Auto Parts","cargo_value_usd":"1200000","eta_days":"23","status":"In Transit"},{"shipment_id":"SHP-0077","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Solar Panels","cargo_value_usd":"120000","eta_days":"14","status":"At Port"},{"shipment_id":"SHP-0078","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Textiles","cargo_value_usd":"750000","eta_days":"6","status":"Customs Hold"},{"shipment_id":"SHP-0079","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Auto Parts","cargo_value_usd":"1200000","eta_days":"26","status":"Customs Hold"},{"shipment_id":"SHP-0080","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"8","status":"Customs Hold"},{"shipment_id":"SHP-0081","current_region":"SAmerica-East","current_location":"Santos, Brazil","cargo":"Auto Parts","cargo_value_usd":"480000","eta_days":"5","status":"Departed"},{"shipment_id":"SHP-0082","current_region":"Europe-North","current_location":"Hamburg, Germany","cargo":"Consumer Electronics","cargo_value_usd":"120000","eta_days":"31","status":"Departed"},{"shipment_id":"SHP-0083","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Consumer Electronics","cargo_value_usd":"750000","eta_days":"34","status":"Customs Hold"},{"shipment_id":"SHP-0084","current_region":"NAmerica-East","current_location":"Savannah, USA","cargo":"Lithium Batteries","cargo_value_usd":"1200000","eta_days":"32","status":"Customs Hold"},{"shipment_id":"SHP-0085","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Steel Coils","cargo_value_usd":"2100000","eta_days":"35","status":"Customs Hold"},{"shipment_id":"SHP-0086","current_region":"Asia-SE","current_location":"Singapore","cargo":"Consumer Electronics","cargo_value_usd":"50000","eta_days":"20","status":"At Port"},{"shipment_id":"SHP-0087","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Auto Parts","cargo_value_usd":"50000","eta_days":"10","status":"At Port"},{"shipment_id":"SHP-0088","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Steel Coils","cargo_value_usd":"1200000","eta_days":"15","status":"In Transit"},{"shipment_id":"SHP-0089","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Auto Parts","cargo_value_usd":"480000","eta_days":"28","status":"In Transit"},{"shipment_id":"SHP-0090","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Semiconductors","cargo_value_usd":"2100000","eta_days":"3","status":"Departed"},{"shipment_id":"SHP-0091","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Agricultural Equipment","cargo_value_usd":"250000","eta_days":"26","status":"Customs Hold"},{"shipment_id":"SHP-0092","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"16","status":"Customs Hold"},{"shipment_id":"SHP-0093","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Textiles","cargo_value_usd":"50000","eta_days":"26","status":"Loading"},{"shipment_id":"SHP-0094","current_region":"SAmerica-East","current_location":"Santos, Brazil","cargo":"Semiconductors","cargo_value_usd":"1200000","eta_days":"12","status":"Customs Hold"},{"shipment_id":"SHP-0095","current_region":"Asia-East","current_location":"Busan, South Korea","cargo":"Auto Parts","cargo_value_usd":"50000","eta_days":"27","status":"Departed"},{"shipment_id":"SHP-0096","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Pharmaceuticals","cargo_value_usd":"1200000","eta_days":"29","status":"At Port"},{"shipment_id":"SHP-0097","current_region":"Asia-East","current_location":"Shanghai, China","cargo":"Industrial Machinery","cargo_value_usd":"250000","eta_days":"26","status":"Loading"},{"shipment_id":"SHP-0098","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Lithium Batteries","cargo_value_usd":"2100000","eta_days":"26","status":"Loading"},{"shipment_id":"SHP-0099","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Steel Coils","cargo_value_usd":"2100000","eta_days":"7","status":"Customs Hold"},{"shipment_id":"SHP-0100","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Industrial Machinery","cargo_value_usd":"250000","eta_days":"16","status":"In Transit"},{"shipment_id":"SHP-0101","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Auto Parts","cargo_value_usd":"120000","eta_days":"14","status":"In Transit"},{"shipment_id":"SHP-0102","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Steel Coils","cargo_value_usd":"480000","eta_days":"9","status":"Departed"},{"shipment_id":"SHP-0103","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Steel Coils","cargo_value_usd":"2100000","eta_days":"25","status":"At Port"},{"shipment_id":"SHP-0104","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Solar Panels","cargo_value_usd":"2100000","eta_days":"12","status":"Loading"},{"shipment_id":"SHP-0105","current_region":"Europe-North","current_location":"Rotterdam, Netherlands","cargo":"Solar Panels","cargo_value_usd":"750000","eta_days":"26","status":"Customs Hold"},{"shipment_id":"SHP-0106","current_region":"Europe-North","current_location":"Hamburg, Germany","cargo":"Consumer Electronics","cargo_value_usd":"1200000","eta_days":"17","status":"In Transit"},{"shipment_id":"SHP-0107","current_region":"Asia-SE","current_location":"Singapore","cargo":"Semiconductors","cargo_value_usd":"2100000","eta_days":"9","status":"Departed"},{"shipment_id":"SHP-0108","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Auto Parts","cargo_value_usd":"480000","eta_days":"25","status":"In Transit"},{"shipment_id":"SHP-0109","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Auto Parts","cargo_value_usd":"2100000","eta_days":"28","status":"Customs Hold"},{"shipment_id":"SHP-0110","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Consumer Electronics","cargo_value_usd":"1200000","eta_days":"11","status":"Customs Hold"},{"shipment_id":"SHP-0111","current_region":"Europe-North","current_location":"Antwerp, Belgium","cargo":"Steel Coils","cargo_value_usd":"750000","eta_days":"32","status":"Customs Hold"},{"shipment_id":"SHP-0112","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Consumer Electronics","cargo_value_usd":"250000","eta_days":"22","status":"At Port"},{"shipment_id":"SHP-0113","current_region":"Asia-SE","current_location":"Singapore","cargo":"Consumer Electronics","cargo_value_usd":"120000","eta_days":"31","status":"Departed"},{"shipment_id":"SHP-0114","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Lithium Batteries","cargo_value_usd":"50000","eta_days":"33","status":"Loading"},{"shipment_id":"SHP-0115","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Agricultural Equipment","cargo_value_usd":"2100000","eta_days":"18","status":"Loading"},{"shipment_id":"SHP-0116","current_region":"Asia-South","current_location":"Mumbai, India","cargo":"Steel Coils","cargo_value_usd":"750000","eta_days":"2","status":"Departed"},{"shipment_id":"SHP-0117","current_region":"Asia-East","current_location":"Shenzhen, China","cargo":"Pharmaceuticals","cargo_value_usd":"480000","eta_days":"17","status":"Customs Hold"},{"shipment_id":"SHP-0118","current_region":"NAmerica-East","current_location":"Savannah, USA","cargo":"Consumer Electronics","cargo_value_usd":"2100000","eta_days":"3","status":"In Transit"},{"shipment_id":"SHP-0119","current_region":"NAmerica-West","current_location":"Long Beach, USA","cargo":"Steel Coils","cargo_value_usd":"250000","eta_days":"25","status":"Customs Hold"},{"shipment_id":"SHP-0120","current_region":"NAmerica-West","current_location":"Los Angeles, USA","cargo":"Pharmaceuticals","cargo_value_usd":"1200000","eta_days":"23","status":"Loading"}];
+
+let sel=null;
+
+function sc(s){return s===9?'s9':s===8?'s8':s===7?'s7':s===6?'s6':s===5?'s5':'slow'}
+function ac(t){return 'a'+t}
+function sl(s){return s===9?'Critical':s>=7?'High':s===6?'Medium':s===5?'Moderate':'Low'}
+
+function init(){
+  document.getElementById('alerts').innerHTML=ALERTS.map((a,i)=>`
+    <div class="alert-row" id="ar${i}" onclick="pick(${i})">
+      <div class="a-title">${a.headline}</div>
+      <div class="a-meta">
+        <div class="a-dot d-${a.sev==='crit'?'crit':a.sev==='med'?'med':'low'}"></div>
+        <span class="a-region">${a.region}</span>
+      </div>
+    </div>`).join('');
+}
+
+function pick(i){
+  document.querySelectorAll('.alert-row').forEach(e=>e.classList.remove('sel'));
+  document.getElementById('ar'+i).classList.add('sel');
+  sel=ALERTS[i];
+  document.getElementById('emptyState').style.display='none';
+  const tp=document.getElementById('triagePanel');
+  tp.style.display='flex';
+  tp.style.flexDirection='column';
+  tp.style.flex='1';
+  tp.style.overflow='hidden';
+  document.getElementById('bHead').textContent=sel.headline;
+  document.getElementById('bBadge').textContent='⚠ '+sel.region;
+  document.getElementById('runBtn').disabled=false;
+  document.getElementById('content').innerHTML=`
+    <div class="body-card">
+      <div class="body-label">Alert details</div>
+      <div class="body-text">${sel.body}</div>
+    </div>`;
+}
+
+async function runTriage(){
+  if(!sel)return;
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;btn.textContent='Running…';
+  document.getElementById('content').innerHTML=`<div class="loading"><div class="spin"></div><div class="spin-msg">AIP reasoning over affected shipments…</div></div>`;
+
+  const affected=SHIPMENTS.filter(s=>s.current_region===sel.region);
+  if(!affected.length){
+    document.getElementById('content').innerHTML=`<div class="no-affected">No shipments currently in ${sel.region}.</div>`;
+    btn.disabled=false;btn.textContent='Run Triage';return;
+  }
+
+  const ctx=affected.map(s=>`${s.shipment_id} | ${s.cargo} | $${parseInt(s.cargo_value_usd).toLocaleString()} | ETA ${s.eta_days}d | ${s.status} | ${s.current_location}`).join('\n');
+
+  const prompt=`You are a supply chain triage AI for Palantir AIP.
+
+Disruption: ${sel.headline}
+Region: ${sel.region}
+Details: ${sel.body}
+
+Shipments in ${sel.region}:
+${ctx}
+
+For EACH shipment above, reason about impact severity and assign a recommended action.
+
+Return ONLY valid JSON, no other text:
+{"shipments":[{"id":"SHP-XXXX","cargo":"...","value":000000,"eta":0,"status":"...","location":"...","severity":9,"action":"specific actionable recommendation","actionType":"reroute"}]}
+
+actionType must be exactly: reroute, coordinate, hold, or monitor
+severity 9=Critical 7-8=High 6=Medium 5=Moderate 1-4=Low
+Consider: cargo value (higher=more critical), ETA (shorter=more urgent), status (Customs Hold=more complex), disruption type`;
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    const txt=d.content[0].text.replace(/```json/g,'').replace(/```/g,'').trim();
+    const parsed=JSON.parse(txt);
+    render(parsed.shipments);
+  }catch(e){
+    document.getElementById('content').innerHTML=`<div class="no-affected">Error: ${e.message}</div>`;
+  }
+  btn.disabled=false;btn.textContent='Run Triage';
+}
+
+function render(rows){
+  if(!rows||!rows.length){document.getElementById('content').innerHTML=`<div class="no-affected">No affected shipments found.</div>`;return;}
+  const sorted=[...rows].sort((a,b)=>b.severity-a.severity);
+  const total=sorted.length,crit=sorted.filter(r=>r.severity===9).length,rer=sorted.filter(r=>r.actionType==='reroute').length,mon=sorted.filter(r=>r.actionType!=='reroute').length;
+  document.getElementById('content').innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Shipments affected</div><div class="stat-num">${total}</div></div>
+      <div class="stat"><div class="stat-label">Critical (sev 9)</div><div class="stat-num r">${crit}</div></div>
+      <div class="stat"><div class="stat-label">Requiring reroute</div><div class="stat-num r">${rer}</div></div>
+      <div class="stat"><div class="stat-label">Monitoring / hold</div><div class="stat-num">${mon}</div></div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>Shipment</th><th>Region</th><th>Cargo</th><th>Severity</th><th>Recommended Action</th>
+        </tr></thead>
+        <tbody>${sorted.map(r=>`
+          <tr>
+            <td><span class="shp">${r.id}</span><br><span class="loc">${r.location||''}</span></td>
+            <td>${sel.region}</td>
+            <td>${r.cargo}<br><span class="loc">$${parseInt(r.value||0).toLocaleString()} · ETA ${r.eta}d</span></td>
+            <td><span class="badge ${sc(r.severity)}">${r.severity} — ${sl(r.severity)}</span></td>
+            <td><span class="act ${ac(r.actionType)}">${r.action}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
